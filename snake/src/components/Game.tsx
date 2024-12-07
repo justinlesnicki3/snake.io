@@ -1,12 +1,15 @@
 import * as React from 'react'
-import { SafeAreaView, StyleSheet } from 'react-native'
+import { SafeAreaView, StyleSheet, View } from 'react-native'
 import { PanGestureHandler } from 'react-native-gesture-handler'
 import { Colors } from 'react-native/Libraries/NewAppScreen'
 import { Coordinate, Direction, GestureEventType } from '../types/types'
+import Snake from './Snake'
+import { checkGameOver } from '../utils/checkGameOver'
+import Food from './Food'
 
 const SNAKE_INTITIAL_POSITION = [{ x: 5, y: 5}]
 const FOOD_INITIAL_POSITION = {x: 5, y: 20}
-const GAME_BOUNDS = { xMin: 0, xMax: 35, yMin: 0, yMax: 63}
+const GAME_BOUNDS = { xMin: 0, xMax: 39, yMin: 0, yMax: 80}
 const MOVE_INTERVAL = 50;
 const SCORE_INCREMENT = 10;
 
@@ -18,6 +21,47 @@ export default function Game():JSX.Element {
             FOOD_INITIAL_POSITION)
     const [isGameOver, setIsGameOver] = React.useState<boolean>(false);
     const [isPaused, setIsPaused] = React.useState<boolean>(false);
+
+    React.useEffect(() => {
+        if(!isGameOver) {
+            const intervalId = setInterval(() => {
+             !isPaused && moveSnake();
+            }, MOVE_INTERVAL)
+            return () => clearInterval(intervalId);
+        }
+    }, [snake, isGameOver, isPaused]);
+
+    const moveSnake = () => {
+        const snakeHead = snake[0];
+        const newHead = {...snakeHead}; // creating copy
+
+        if(checkGameOver(snakeHead, GAME_BOUNDS)) {
+            setIsGameOver((prev) => !prev);
+            return;
+        }
+
+        switch (direction) {
+            case Direction.Up:
+                newHead.y -= 1;
+                break;
+            case Direction.Down:
+                newHead.y +=1;
+                break;
+            case Direction.Left:
+                newHead.x -= 1;
+                break;
+            case Direction.Right:
+                newHead.x += 1;
+                break;
+            default:
+                break;
+        }
+
+    
+
+        setSnake([newHead, ...snake.slice(0,-1)]);
+
+    }
 
 
     const handleGesture = (event: GestureEventType) => {
@@ -41,7 +85,12 @@ export default function Game():JSX.Element {
 
     return ( 
 <PanGestureHandler onGestureEvent={handleGesture}>
-        <SafeAreaView style={styles.container}></SafeAreaView>
+        <SafeAreaView style={styles.container}>
+            <View style={styles.boundaries}>
+                <Snake snake={snake} />
+                <Food x={food.x} y={food.y} />
+            </View>
+        </SafeAreaView>
 </PanGestureHandler>
     );
 }
@@ -49,6 +98,14 @@ export default function Game():JSX.Element {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-         backgroundColor: Colors.primary,
+         backgroundColor: "#365314",
+    },
+    boundaries: {
+        flex: 1,
+        borderColor: "#365314",
+        borderWidth: 12,
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+        backgroundColor:"#ecfccb",
     }
 })
